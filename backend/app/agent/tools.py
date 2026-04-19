@@ -8,6 +8,7 @@ from app.market import service as market_service
 from app.market.indicators import calculate as calc_indicators
 from app.permission import queue as order_queue
 from app.permission.queue import OrderProposal, OrderSide
+from app.risk.engine import classify_tier
 
 log = structlog.get_logger()
 
@@ -76,6 +77,7 @@ async def propose_order(
         price=price,
         strategy=strategy,
         reasoning=reasoning,
+        tier=classify_tier(qty, price),
     )
     order_queue.push(proposal)
     log.info("agent.propose_order", ticker=ticker, side=side, qty=qty, price=price)

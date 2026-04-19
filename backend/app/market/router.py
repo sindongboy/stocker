@@ -4,6 +4,7 @@ from typing import Any
 import structlog
 from fastapi import APIRouter, HTTPException, WebSocket, WebSocketDisconnect
 
+from app.db.engine import get_session
 from app.market import service
 from app.market.schemas import Candle, Snapshot, WatchlistItem
 
@@ -41,13 +42,15 @@ async def get_watchlist():
 
 @router.post("/watchlist/{ticker}", status_code=201)
 async def add_watchlist(ticker: str):
-    added = service.add_to_watchlist(ticker)
+    with get_session() as session:
+        added = service.add_to_watchlist(ticker, session)
     return {"added": added, "ticker": ticker}
 
 
 @router.delete("/watchlist/{ticker}")
 async def remove_watchlist(ticker: str):
-    removed = service.remove_from_watchlist(ticker)
+    with get_session() as session:
+        removed = service.remove_from_watchlist(ticker, session)
     if not removed:
         raise HTTPException(status_code=404, detail=f"{ticker} not in watchlist")
     return {"removed": True, "ticker": ticker}

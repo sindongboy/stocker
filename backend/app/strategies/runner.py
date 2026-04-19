@@ -4,7 +4,7 @@ from app.market import service as market_service
 from app.permission import queue as order_queue
 from app.permission.queue import OrderProposal, OrderSide
 from app.portfolio import store as portfolio_store
-from app.risk.engine import check_buy, check_sell
+from app.risk.engine import check_buy, check_sell, classify_tier
 from app.strategies.ma_crossover import MACrossoverStrategy
 from app.strategies.rsi_reversion import RSIMeanReversionStrategy
 
@@ -63,6 +63,7 @@ async def scan_all(tickers: list[str]) -> list[dict]:
                 qty=signal.qty, price=signal.price,
                 strategy=signal.strategy,
                 reasoning=signal.reasoning,
+                tier=classify_tier(signal.qty, signal.price),
             )
             order_queue.push(proposal)
             log.info(

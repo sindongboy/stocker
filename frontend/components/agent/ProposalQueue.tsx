@@ -4,11 +4,65 @@ import { useState } from 'react'
 import useSWR from 'swr'
 import { ProposalRow } from './ProposalRow'
 import { ReasoningList } from './ReasoningList'
-import type { Proposal } from '@/types/proposal'
+import type { Proposal, Trade } from '@/types/proposal'
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json())
 
-type Tab = 'pending' | 'history' | 'reasoning'
+type Tab = 'pending' | 'history' | 'trades' | 'reasoning'
+
+function fmt(n: number) {
+  return n.toLocaleString('ko-KR')
+}
+
+function TradeList() {
+  const { data: trades = [], isLoading } = useSWR<Trade[]>(
+    '/api/v1/agent/trades',
+    fetcher,
+    { refreshInterval: 5000 }
+  )
+  if (isLoading) return <p className="text-gray-600 text-sm">불러오는 중…</p>
+  if (trades.length === 0) return <p className="text-gray-600 text-sm">체결 이력이 없습니다.</p>
+  return (
+    <div className="flex flex-col gap-2">
+      {trades.map((t) => (
+        <div key={t.id} className="rounded-lg border border-gray-800 bg-gray-900 px-4 py-3 flex flex-col gap-1.5">
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className={`text-xs font-bold px-2 py-0.5 rounded border ${
+              t.side === 'buy'
+                ? 'text-red-400 bg-red-950 border-red-900'
+                : 'text-blue-400 bg-blue-950 border-blue-900'
+            }`}>
+              {t.side === 'buy' ? '매수' : '매도'}
+            </span>
+            <span className="font-semibold text-gray-100">{t.name}</span>
+            <span className="text-sm text-gray-500">{t.ticker}</span>
+            <span className="ml-auto text-xs text-gray-500">
+              {new Date(t.executed_at).toLocaleString('ko-KR')}
+            </span>
+          </div>
+          <div className="flex gap-4 text-sm flex-wrap">
+            <div>
+              <span className="text-gray-500">수량 </span>
+              <span className="font-mono text-gray-200">{fmt(t.qty)}주</span>
+            </div>
+            <div>
+              <span className="text-gray-500">체결가 </span>
+              <span className="font-mono text-gray-200">₩{fmt(t.fill_price)}</span>
+            </div>
+            {t.realized_pnl !== 0 && (
+              <div>
+                <span className="text-gray-500">실현손익 </span>
+                <span className={`font-mono ${t.realized_pnl > 0 ? 'text-red-400' : 'text-blue-400'}`}>
+                  {t.realized_pnl > 0 ? '+' : ''}{fmt(t.realized_pnl)}원
+                </span>
+              </div>
+            )}
+          </div>
+        </div>
+      ))}
+    </div>
+  )
+}
 
 export function ProposalQueue() {
   const [tab, setTab] = useState<Tab>('pending')
@@ -23,7 +77,6 @@ export function ProposalQueue() {
   const history  = all.filter((p) => p.status !== 'pending')
 
   async function handleAction(id: string, status: 'approved' | 'rejected') {
-    // Optimistic update so UI reflects the change before the next poll
     mutate(
       (current = []) => current.map((p) => (p.id === id ? { ...p, status } : p)),
       { revalidate: false }
@@ -33,8 +86,9 @@ export function ProposalQueue() {
   }
 
   const tabs: Array<{ key: Tab; label: string; count?: number }> = [
-    { key: 'pending',   label: '대기 중',     count: pending.length },
-    { key: 'history',   label: '처리 완료',   count: history.length },
+    { key: 'pending',   label: '대기 중',   count: pending.length },
+    { key: 'history',   label: '처리 완료', count: history.length },
+    { key: 'trades',    label: '체결 이력' },
     { key: 'reasoning', label: '추론 이력' },
   ]
 
@@ -71,6 +125,8 @@ export function ProposalQueue() {
       <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-3">
         {tab === 'reasoning' ? (
           <ReasoningList />
+        ) : tab === 'trades' ? (
+          <TradeList />
         ) : (
           <>
             {isLoading && <p className="text-gray-600 text-sm">불러오는 중…</p>}

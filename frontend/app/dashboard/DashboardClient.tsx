@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useCallback } from 'react'
+import useSWR from 'swr'
 import { WatchlistPanel } from '@/components/market/WatchlistPanel'
 import { CandleChart } from '@/components/market/CandleChart'
 import { AgentControls } from '@/components/agent/AgentControls'
@@ -14,13 +15,24 @@ interface WatchlistItem {
   market: string
 }
 
-interface Props {
-  watchlist: WatchlistItem[]
-}
+const fetcher = (url: string) => fetch(url).then((r) => r.json())
 
-export function DashboardClient({ watchlist }: Props) {
-  const [selected, setSelected] = useState<string | null>(watchlist[0]?.ticker ?? null)
+export function DashboardClient() {
+  const [selected, setSelected] = useState<string | null>(null)
   const [queueKey, setQueueKey] = useState(0)
+
+  const { data: watchlist = [], mutate: mutateWatchlist } = useSWR<WatchlistItem[]>(
+    '/api/v1/market/watchlist',
+    fetcher,
+    {
+      revalidateOnFocus: false,
+      onSuccess: (data) => {
+        if (selected === null && data.length > 0) {
+          setSelected(data[0].ticker)
+        }
+      },
+    }
+  )
 
   const tickers = watchlist.map((i) => i.ticker)
   const selectedItem = watchlist.find((i) => i.ticker === selected)
@@ -29,9 +41,13 @@ export function DashboardClient({ watchlist }: Props) {
     setQueueKey((k) => k + 1)
   }, [])
 
+  const handleWatchlistChange = useCallback(() => {
+    mutateWatchlist()
+  }, [mutateWatchlist])
+
   return (
     <div className="flex flex-col h-screen bg-gray-950 text-gray-100">
-      {/* Top bar — agent + strategy controls */}
+      {/* Top bar */}
       <div className="flex items-center gap-4 px-4 py-2 border-b border-gray-800 shrink-0">
         <AgentControls tickers={tickers} onRunComplete={handleRunComplete} />
         <div className="h-5 w-px bg-gray-800" />
@@ -40,17 +56,22 @@ export function DashboardClient({ watchlist }: Props) {
 
       {/* Body */}
       <div className="flex flex-1 overflow-hidden">
-        {/* Sidebar — watchlist + portfolio */}
+        {/* Sidebar */}
         <div className="w-56 shrink-0 border-r border-gray-800 overflow-y-auto flex flex-col">
-          <div className="p-2">
-            <WatchlistPanel items={watchlist} selected={selected} onSelect={setSelected} />
+          <div className="p-2 flex-1">
+            <WatchlistPanel
+              items={watchlist}
+              selected={selected}
+              onSelect={setSelected}
+              onWatchlistChange={handleWatchlistChange}
+            />
           </div>
           <PortfolioWidget />
         </div>
 
         {/* Main column */}
         <div className="flex flex-col flex-1 overflow-hidden">
-          {/* Chart — top 55% */}
+          {/* Chart */}
           <div className="flex-[55] overflow-auto p-6 border-b border-gray-800">
             {selectedItem ? (
               <CandleChart ticker={selectedItem.ticker} name={selectedItem.name} />
@@ -61,7 +82,7 @@ export function DashboardClient({ watchlist }: Props) {
             )}
           </div>
 
-          {/* Proposal queue — bottom 45% */}
+          {/* Proposal queue */}
           <div className="flex-[45] overflow-hidden">
             <ProposalQueue key={queueKey} />
           </div>

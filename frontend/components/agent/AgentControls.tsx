@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 
 interface Props {
   tickers: string[]
@@ -13,6 +13,16 @@ export function AgentControls({ tickers, onRunComplete }: Props) {
   const [state, setState] = useState<RunState>('idle')
   const [lastResult, setLastResult] = useState<{ proposed_count: number; turns: number } | null>(null)
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
+  const [strategyNames, setStrategyNames] = useState<string>('로딩 중…')
+
+  useEffect(() => {
+    fetch('/api/v1/strategies/list')
+      .then((r) => r.json())
+      .then((data: Array<{ name: string }>) => {
+        if (data.length > 0) setStrategyNames(data.map((s) => s.name).join(', '))
+      })
+      .catch(() => setStrategyNames('전략 조회 실패'))
+  }, [])
 
   async function handleRun() {
     setState('running')
@@ -62,7 +72,7 @@ export function AgentControls({ tickers, onRunComplete }: Props) {
         )}
       </button>
 
-      <span className="text-xs text-gray-500">전략: MA Crossover</span>
+      <span className="text-xs text-gray-500">전략: {strategyNames}</span>
       <span className="text-xs text-gray-600">종목 {tickers.length}개</span>
 
       {state === 'done' && lastResult && (

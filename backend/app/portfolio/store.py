@@ -1,6 +1,8 @@
 from dataclasses import dataclass, field
 from datetime import date
 
+from app.core.config import settings
+
 
 @dataclass
 class Position:
@@ -104,5 +106,5 @@ def as_dict() -> dict:
             }
             for pos in p.positions.values()
         ],
-        "mode": "paper",
+        "mode": settings.trading_mode,
     }

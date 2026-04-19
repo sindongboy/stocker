@@ -6,6 +6,7 @@ from google.genai import types
 
 from app.agent import tools as agent_tools
 from app.core.config import settings
+from app.strategies.runner import STRATEGIES
 
 log = structlog.get_logger()
 
@@ -109,10 +110,11 @@ async def run_cycle(tickers: list[str]) -> dict:
     client = genai.Client(api_key=settings.gemini_api_key)
     tools = [types.Tool(function_declarations=_DECLARATIONS)]
 
+    strategy_names = ", ".join(s.name for s in STRATEGIES)
     contents: list[types.Content] = [
         types.Content(
             role="user",
-            parts=[types.Part(text=f"다음 종목들을 MA crossover 전략으로 분석하세요: {', '.join(tickers)}")],
+            parts=[types.Part(text=f"다음 종목들을 [{strategy_names}] 전략 관점에서 분석하세요: {', '.join(tickers)}")],
         )
     ]
 
