@@ -1,0 +1,16 @@
+tiers:
+  T2:
+    max_single_order_krw: 500_000      # ₩500,000 per order
+    max_daily_krw: 2_000_000           # ₩2,000,000 cumulative per day
+    allowed_order_types:
+      - limit                          # market orders always require UI selection
+
+  T3:
+    requires_manual_approval: true
+
+  T4:
+    requires_manual_approval: true
+    requires_two_step_confirm: true
+    triggers:
+      - new_strategy
+      - after_hours

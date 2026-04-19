@@ -1,0 +1,85 @@
+# ═══════════════════════════════════════════════════════════════
+#  .envrc.example — Template for environment variables
+# ───────────────────────────────────────────────────────────────
+#  Usage:
+#    1. Copy this file to `.envrc.local` (never commit .envrc.local)
+#       $ cp .envrc.example .envrc.local
+#    2. Fill in the real values below.
+#    3. Allow direnv:
+#       $ direnv allow .
+# ═══════════════════════════════════════════════════════════════
+
+
+# ── Kiwoom REST API (Live / 실전투자) ─────────────────────────
+# Issued at: https://openapi.kiwoom.com/ (PC only)
+# Required: HTS ID must be linked to the account before issuance.
+export KIWOOM_APP_KEY=""
+export KIWOOM_APP_SECRET=""
+export KIWOOM_ACCOUNT_NUMBER=""      # e.g. "00000000-01"
+export KIWOOM_HTS_ID=""
+export KIWOOM_API_BASE_URL="https://api.kiwoom.com"
+
+
+# ── Kiwoom REST API (Mock / 모의투자) ─────────────────────────
+# Separate registration required. Different AppKey/Secret from live.
+export KIWOOM_MOCK_APP_KEY=""
+export KIWOOM_MOCK_APP_SECRET=""
+export KIWOOM_MOCK_ACCOUNT_NUMBER=""
+export KIWOOM_MOCK_API_BASE_URL="https://mockapi.kiwoom.com"
+
+
+# ── Trading Mode ──────────────────────────────────────────────
+# paper : route all orders to mock endpoint (DEFAULT, safe)
+# live  : route orders to real account (requires explicit UI toggle)
+export TRADING_MODE="paper"
+
+
+# ── Permission Profile ────────────────────────────────────────
+# strict     : every order requires manual approval (DEFAULT)
+# standard   : T2 tier auto-executes within limits
+# autonomous : T2+T3 auto-executes (use with extreme caution)
+export PERMISSION_PROFILE="strict"
+
+
+# ── Google Gemini API (런타임 에이전트 두뇌) ──────────────────
+# Issued at: https://aistudio.google.com/app/apikey
+# Subscription: Gemini Advanced / Google AI Pro (별개 — API는 pay-per-use)
+export GEMINI_API_KEY=""
+export GEMINI_MODEL_PRO="gemini-2.5-pro"       # 최종 의사결정용
+export GEMINI_MODEL_FLASH="gemini-2.5-flash"   # 경량 태스크용 (분류/요약)
+
+
+# ── Global Market Data (보조 — 미국/글로벌 컨텍스트) ──────────
+# Polygon.io: https://polygon.io/dashboard/api-keys
+export POLYGON_API_KEY=""
+
+# Finnhub: https://finnhub.io/dashboard
+export FINNHUB_API_KEY=""
+
+
+# ── External Data Sources (Future — 현재 미사용) ──────────────
+# 아래 소스는 Phase 2 이후 필요 시 신청. 지금은 주석 유지만.
+# DART (전자공시): https://opendart.fss.or.kr/
+# export DART_API_KEY=""
+#
+# BOK ECOS (한국은행 경제통계): https://ecos.bok.or.kr/api/
+# export BOK_ECOS_API_KEY=""
+#
+# Naver News API: https://developers.naver.com/
+# export NAVER_CLIENT_ID=""
+# export NAVER_CLIENT_SECRET=""
+
+
+# ── Database ──────────────────────────────────────────────────
+# SQLite by default (local dev). Switch to Postgres via docker-compose if needed.
+export DATABASE_URL="sqlite:///./data/trading.db"
+
+
+# ── Cache / Queue ─────────────────────────────────────────────
+export REDIS_URL="redis://localhost:6379/0"
+
+
+# ── Runtime ───────────────────────────────────────────────────
+export PYTHONPATH="$PWD/backend"
+export LOG_LEVEL="INFO"                # DEBUG | INFO | WARNING | ERROR
+export TZ="Asia/Seoul"
